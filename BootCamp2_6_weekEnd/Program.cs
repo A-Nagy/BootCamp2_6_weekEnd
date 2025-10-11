@@ -1,4 +1,6 @@
 using BootCamp2_6_weekEnd.Data;
+using BootCamp2_6_weekEnd.Repository.Base;
+using BootCamp2_6_weekEnd.Repository.Implement;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +10,19 @@ builder.Services.AddControllersWithViews();
 
 var connectionString = builder.Configuration.GetConnectionString("DefualtConnection");
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(connectionString));
+builder.Services.AddScoped(typeof(IRepository<>) ,typeof(MainRepository<>) );
+//builder.Services.AddScoped<IRepoEmployee, RepoEmployee>();
+//builder.Services.AddScoped<IRepoProduct, RepoProduct>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 
 var app = builder.Build();

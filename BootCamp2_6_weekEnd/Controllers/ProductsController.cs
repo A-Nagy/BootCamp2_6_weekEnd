@@ -7,36 +7,32 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BootCamp2_6_weekEnd.Data;
 using BootCamp2_6_weekEnd.Models;
+using BootCamp2_6_weekEnd.Repository.Base;
 
 namespace BootCamp2_6_weekEnd.Controllers
 {
     public class ProductsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ProductsController(AppDbContext context)
+        public ProductsController(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+
         }
 
         // GET: Products
         public async Task<IActionResult> Index()
         {
-            var appDbContext = _context.Products.Include(p => p.Category);
-            return View(await appDbContext.ToListAsync());
+            var products = _unitOfWork.Products.GetAllProducts();
+            return View(products);
         }
 
         // GET: Products/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        public IActionResult Details(int id)
+        {           
+            var product =   _unitOfWork.Products.GetProductWithCategory(id);
 
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
             if (product == null)
             {
                 return NotFound();
@@ -48,7 +44,7 @@ namespace BootCamp2_6_weekEnd.Controllers
         // GET: Products/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
+            ViewData["CategoryId"] = new SelectList(_unitOfWork.Categories.GetAll(), "Id", "Name");
             return View();
         }
 
@@ -61,11 +57,12 @@ namespace BootCamp2_6_weekEnd.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
+                _unitOfWork.Products.Create(product);
+                _unitOfWork.Save();
                 return RedirectToAction(nameof(Index));
+                
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_unitOfWork.Categories.GetAll(), product.CategoryId);
             return View(product);
         }
 
@@ -77,12 +74,12 @@ namespace BootCamp2_6_weekEnd.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
+            var product =   _unitOfWork.Products.GetById(id.Value);
             if (product == null)
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_unitOfWork.Categories.GetAll(), "Id", "Name", product.CategoryId);
             return View(product);
         }
 
@@ -102,23 +99,16 @@ namespace BootCamp2_6_weekEnd.Controllers
             {
                 try
                 {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
+                    _unitOfWork.Products.Update(product);
+                    _unitOfWork.Save();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_unitOfWork.Categories.GetAll(), "Id", "Name", product.CategoryId);
             return View(product);
         }
 
@@ -130,9 +120,8 @@ namespace BootCamp2_6_weekEnd.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product =   _unitOfWork.Products.GetProductWithCategory(id.Value);
+                 
             if (product == null)
             {
                 return NotFound();
@@ -146,19 +135,16 @@ namespace BootCamp2_6_weekEnd.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product =  _unitOfWork.Products.GetById(id);
             if (product != null)
             {
-                _context.Products.Remove(product);
+                _unitOfWork.Products.Delete(product);
             }
 
-            await _context.SaveChangesAsync();
+            _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
-        }
+         
     }
 }
