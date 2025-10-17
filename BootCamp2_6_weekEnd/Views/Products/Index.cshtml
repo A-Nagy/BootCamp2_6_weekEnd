@@ -4,16 +4,19 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Products List</h1>
+<h1>Index</h1>
 
 <p>
-    <a asp-action="Create" class= "btn btn-primary">Create New</a>
+    <a asp-action="Create">Create New</a>
 </p>
 <table class="table">
     <thead>
         <tr>
             <th>
-              Name
+                @Html.DisplayNameFor(model => model.uid)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Description)
@@ -27,12 +30,30 @@
             <th>
                 @Html.DisplayNameFor(model => model.Category)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ReservedQuantity)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.RowVersion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UpdatedAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ImageUrl)
+            </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.uid)
+            </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Name)
             </td>
@@ -49,9 +70,24 @@
                 @Html.DisplayFor(modelItem => item.Category.Name)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.Id"    class= "btn btn-warning">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id" class= "btn btn-info">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id"  class= "btn btn-danger">Delete</a>
+                @Html.DisplayFor(modelItem => item.ReservedQuantity)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RowVersion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedAt)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UpdatedAt)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ImageUrl)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>
 }

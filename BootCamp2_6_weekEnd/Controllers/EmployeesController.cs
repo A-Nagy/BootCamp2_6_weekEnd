@@ -1,71 +1,164 @@
-﻿using BootCamp2_6_weekEnd.Data;
-using BootCamp2_6_weekEnd.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using BootCamp2_6_weekEnd.Data;
+using BootCamp2_6_weekEnd.Models;
 
 namespace BootCamp2_6_weekEnd.Controllers
 {
     public class EmployeesController : Controller
     {
         private readonly AppDbContext _context;
+
         public EmployeesController(AppDbContext context)
         {
             _context = context;
         }
 
-        [HttpGet]
-        public IActionResult Index()
+        // GET: Employees
+        public async Task<IActionResult> Index()
         {
-            IEnumerable<Employee> employees = _context.Employees.ToList();
-            return View(employees);
+            var appDbContext = _context.Employees.Include(e => e.UserRole);
+            return View(await appDbContext.ToListAsync());
         }
 
+        // GET: Employees/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
+            var employee = await _context.Employees
+                .Include(e => e.UserRole)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
 
-        [HttpGet]
+            return View(employee);
+        }
+
+        // GET: Employees/Create
         public IActionResult Create()
         {
+            ViewData["UserRoleId"] = new SelectList(_context.UserRoles, "Id", "Id");
             return View();
         }
 
+        // POST: Employees/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        public IActionResult Create(Employee employees)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Email,Address,Salary,UserName,Password,Created,IsLocked,IsDeleted,DeletedDate,UserDelete,UserRoleId")] Employee employee)
         {
-            _context.Employees.Add(employees);
-            _context.SaveChanges();
-            return RedirectToAction("Index");
-        }
-
-        [HttpGet]
-        public IActionResult Edit(int id)
-        {
-            var employee = _context.Employees.Find(id);
+            if (ModelState.IsValid)
+            {
+                _context.Add(employee);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["UserRoleId"] = new SelectList(_context.UserRoles, "Id", "Id", employee.UserRoleId);
             return View(employee);
         }
 
-        [HttpPost]
-        public IActionResult Edit(Employee employee)
+        // GET: Employees/Edit/5
+        public async Task<IActionResult> Edit(int? id)
         {
-            
-            _context.Employees.Update(employee);
-            _context.SaveChanges();
-            return RedirectToAction("Index");
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+            ViewData["UserRoleId"] = new SelectList(_context.UserRoles, "Id", "Id", employee.UserRoleId);
+            return View(employee);
         }
 
-        [HttpGet]
-        public IActionResult Delete(int id)
+        // POST: Employees/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Email,Address,Salary,UserName,Password,Created,IsLocked,IsDeleted,DeletedDate,UserDelete,UserRoleId")] Employee employee)
         {
-            var employee= _context.Employees.Find(id);
+            if (id != employee.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(employee);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!EmployeeExists(employee.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["UserRoleId"] = new SelectList(_context.UserRoles, "Id", "Id", employee.UserRoleId);
+            return View(employee);
+        }
+
+        // GET: Employees/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var employee = await _context.Employees
+                .Include(e => e.UserRole)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
 
             return View(employee);
         }
 
-        [HttpPost]
-        public IActionResult Delete(Employee employee)
+        // POST: Employees/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            _context.Employees.Remove(employee);
-            _context.SaveChanges();
-            return RedirectToAction("Index");
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee != null)
+            {
+                _context.Employees.Remove(employee);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
+        private bool EmployeeExists(int id)
+        {
+            return _context.Employees.Any(e => e.Id == id);
+        }
     }
 }
