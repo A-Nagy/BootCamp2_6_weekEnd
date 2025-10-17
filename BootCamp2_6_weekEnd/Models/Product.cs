@@ -23,7 +23,7 @@ namespace BootCamp2_6_weekEnd.Models
 
 
         [NotMapped]
-        public IFormFile ImageFile { get; set; }
+        public IFormFile? ImageFile { get; set; }
         public string? ImageUrl { get; set; }
 
 

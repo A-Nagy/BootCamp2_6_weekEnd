@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BootCamp2_6_weekEnd.Data;
 using BootCamp2_6_weekEnd.Models;
+using Microsoft.CodeAnalysis;
 
 namespace BootCamp2_6_weekEnd.Controllers
 {
@@ -51,7 +52,14 @@ namespace BootCamp2_6_weekEnd.Controllers
             // نعيد المسار النسبي للاستخدام في <img src="~/{path}">
             var relativePath = Path.Combine(folder, fileName).Replace('\\', '/');
             return "/" + relativePath;
+
+
+            
+
         }
+
+
+
         private void DeleteImageIfExists(string? relativePath)
         {
             if (string.IsNullOrWhiteSpace(relativePath)) return;
@@ -104,22 +112,17 @@ namespace BootCamp2_6_weekEnd.Controllers
         [ValidateAntiForgeryToken]
         public  IActionResult Create(Product product)
         {
-            if (ModelState.IsValid)
-            {
-                if (product.ImageFile == null || product.ImageFile.Length == 0)
+            
+                if (product.ImageFile != null || product.ImageFile.Length != 0)
                 {
                     var imagepath = SaveImage(product.ImageFile);
                     product.ImageUrl = imagepath;
-
-
-
-
                     _context.Add(product);
                     _context.SaveChanges();
                     return RedirectToAction(nameof(Index));
                 }
-            }
-            return View();
+             
+           return View();
                
        
             //ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
@@ -128,11 +131,7 @@ namespace BootCamp2_6_weekEnd.Controllers
 
         // GET: Products/Edit/5
         public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        { 
 
             var product = await _context.Products.FindAsync(id);
             if (product == null)
@@ -148,31 +147,36 @@ namespace BootCamp2_6_weekEnd.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,uid,Name,Description,Price,Quantity,CategoryId,ReservedQuantity,RowVersion,CreatedAt,UpdatedAt,ImageUrl")] Product product)
+        public IActionResult Edit(Product product)
         {
-            if (id != product.Id)
+  
+            try
             {
-                return NotFound();
-            }
 
-            if (ModelState.IsValid)
-            {
-                try
+
+                if (product.ImageFile != null)
                 {
+                    DeleteImageIfExists(product.ImageUrl);
+                    var imagepath = SaveImage(product.ImageFile);
+                    product.ImageUrl = imagepath;
+                }
+
+                    product.ImageUrl =product.ImageUrl ;
                     _context.Update(product);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
+                     _context.SaveChanges();
+             
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductExists(product.Id))
                 {
-                    if (!ProductExists(product.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
+                else
+                {
+                    throw;
+                }
+
                 return RedirectToAction(nameof(Index));
             }
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
