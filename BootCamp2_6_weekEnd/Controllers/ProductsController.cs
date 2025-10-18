@@ -79,6 +79,19 @@ namespace BootCamp2_6_weekEnd.Controllers
             return View(await appDbContext.ToListAsync());
         }
 
+
+        public  IActionResult getproducts()
+        {
+            var pro = _context.Products.ToList();
+            return View(pro);
+        }
+
+        public IActionResult getproducts2()
+        {
+            var pro = _context.Products.ToList();
+            return Ok(pro);
+        }
+
         // GET: Products/Details/5
         public async Task<IActionResult> Details(int? id)
         {

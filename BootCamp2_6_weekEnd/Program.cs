@@ -11,10 +11,15 @@ builder.Services.AddControllersWithViews();
 var connectionString = builder.Configuration.GetConnectionString("DefualtConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseLazyLoadingProxies().UseSqlServer(connectionString));
+
+
+builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler =System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
+ 
 builder.Services.AddScoped(typeof(IRepository<>) ,typeof(MainRepository<>) );
 //builder.Services.AddScoped<IRepoEmployee, RepoEmployee>();
 //builder.Services.AddScoped<IRepoProduct, RepoProduct>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
 
 builder.Services.AddSession(options =>
@@ -37,10 +42,10 @@ if (!app.Environment.IsDevelopment())
 app.MapControllers();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
+app.UseSession();
 app.UseAuthorization();
+
 
 app.MapControllerRoute(
     name: "default",
